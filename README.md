@@ -1,4 +1,4 @@
 vtt.js-dist
 ===========
 
-Holds the current built version of https://github.com/andreasgal/vtt.js for bower
+Distributions for vtt.js. Main repo can be fond at https://github.com/andreasgal/vtt.js.
