@@ -2480,7 +2480,7 @@
     // Lets us know when the VTTCue's data has changed in such a way that we need
     // to recompute its display state. This lets us compute its display state
     // lazily.
-    this._reset = false;
+    this.reset = false;
 
     /**
      * VTTCue and TextTrackCue properties
@@ -2531,7 +2531,7 @@
             throw new TypeError("Start time must be set to a number.");
           }
           _startTime = value;
-          this._reset = true;
+          this.reset = true;
         }
       },
       "endTime": {
@@ -2544,7 +2544,7 @@
             throw new TypeError("End time must be set to a number.");
           }
           _endTime = value;
-          this._reset = true;
+          this.reset = true;
         }
       },
       "text": {
@@ -2554,7 +2554,7 @@
         },
         set: function(value) {
           _text = "" + value;
-          this._reset = true;
+          this.reset = true;
         }
       },
       "regionId": {
@@ -2564,7 +2564,7 @@
         },
         set: function(value) {
           _regionId = "" + value;
-          this._reset = true;
+          this.reset = true;
         },
       },
       "vertical": {
@@ -2579,7 +2579,7 @@
             throw new SyntaxError("An invalid or illegal string was specified.");
           }
           _vertical = setting;
-          this._reset = true;
+          this.reset = true;
         },
       },
       "snapToLines": {
@@ -2589,7 +2589,7 @@
         },
         set: function(value) {
           _snapToLines = !!value;
-          this._reset = true;
+          this.reset = true;
         }
       },
       "line": {
@@ -2602,7 +2602,7 @@
             throw new SyntaxError("An invalid number or illegal string was specified.");
           }
           _line = value;
-          this._reset = true;
+          this.reset = true;
         }
       },
       "lineAlign": {
@@ -2616,7 +2616,7 @@
             throw new SyntaxError("An invalid or illegal string was specified.");
           }
           _lineAlign = setting;
-          this._reset = true;
+          this.reset = true;
         }
       },
       "position": {
@@ -2629,7 +2629,7 @@
             throw new Error("Position must be between 0 and 100.");
           }
           _position = value;
-          this._reset = true;
+          this.reset = true;
         }
       },
       "positionAlign": {
@@ -2643,7 +2643,7 @@
             throw new SyntaxError("An invalid or illegal string was specified.");
           }
           _positionAlign = setting;
-          this._reset = true;
+          this.reset = true;
         }
       },
       "size": {
@@ -2656,7 +2656,7 @@
             throw new Error("Size must be between 0 and 100.");
           }
           _size = value;
-          this._reset = true;
+          this.reset = true;
         }
       },
       "align": {
@@ -2670,7 +2670,7 @@
             throw new SyntaxError("An invalid or illegal string was specified.");
           }
           _align = setting;
-          this._reset = true;
+          this.reset = true;
         }
       }
     });
@@ -3720,7 +3720,7 @@
         continue;
       }
       // Check to see if we can just reuse the last computed styles of the cue.
-      if (cues[i]._reset !== true && cues[i].displayState) {
+      if (cues[i].reset !== true && cues[i].displayState) {
         overlay.appendChild(cues[i].displayState);
         continue;
       }
