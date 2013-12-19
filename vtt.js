@@ -1,4 +1,4 @@
-/*! vtt.js - https://github.com/mozilla/vtt.js (built on 16-12-2013) */
+/*! vtt.js - https://github.com/mozilla/vtt.js (built on 19-12-2013) */
 (function(global) {
   'use strict';
 
@@ -2448,6 +2448,22 @@
   global['TextDecoder'] = global['TextDecoder'] || TextDecoder;
 }(this));
 
+/**
+ * Copyright 2013 vtt.js Contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 (function(root) {
 
   var autoKeyword = "auto";
@@ -2480,7 +2496,7 @@
     // Lets us know when the VTTCue's data has changed in such a way that we need
     // to recompute its display state. This lets us compute its display state
     // lazily.
-    this.reset = false;
+    this.hasBeenReset = false;
 
     /**
      * VTTCue and TextTrackCue properties
@@ -2531,7 +2547,7 @@
             throw new TypeError("Start time must be set to a number.");
           }
           _startTime = value;
-          this.reset = true;
+          this.hasBeenReset = true;
         }
       },
       "endTime": {
@@ -2544,7 +2560,7 @@
             throw new TypeError("End time must be set to a number.");
           }
           _endTime = value;
-          this.reset = true;
+          this.hasBeenReset = true;
         }
       },
       "text": {
@@ -2554,7 +2570,7 @@
         },
         set: function(value) {
           _text = "" + value;
-          this.reset = true;
+          this.hasBeenReset = true;
         }
       },
       "regionId": {
@@ -2564,7 +2580,7 @@
         },
         set: function(value) {
           _regionId = "" + value;
-          this.reset = true;
+          this.hasBeenReset = true;
         },
       },
       "vertical": {
@@ -2579,7 +2595,7 @@
             throw new SyntaxError("An invalid or illegal string was specified.");
           }
           _vertical = setting;
-          this.reset = true;
+          this.hasBeenReset = true;
         },
       },
       "snapToLines": {
@@ -2589,7 +2605,7 @@
         },
         set: function(value) {
           _snapToLines = !!value;
-          this.reset = true;
+          this.hasBeenReset = true;
         }
       },
       "line": {
@@ -2602,7 +2618,7 @@
             throw new SyntaxError("An invalid number or illegal string was specified.");
           }
           _line = value;
-          this.reset = true;
+          this.hasBeenReset = true;
         }
       },
       "lineAlign": {
@@ -2616,7 +2632,7 @@
             throw new SyntaxError("An invalid or illegal string was specified.");
           }
           _lineAlign = setting;
-          this.reset = true;
+          this.hasBeenReset = true;
         }
       },
       "position": {
@@ -2629,7 +2645,7 @@
             throw new Error("Position must be between 0 and 100.");
           }
           _position = value;
-          this.reset = true;
+          this.hasBeenReset = true;
         }
       },
       "positionAlign": {
@@ -2643,7 +2659,7 @@
             throw new SyntaxError("An invalid or illegal string was specified.");
           }
           _positionAlign = setting;
-          this.reset = true;
+          this.hasBeenReset = true;
         }
       },
       "size": {
@@ -2656,7 +2672,7 @@
             throw new Error("Size must be between 0 and 100.");
           }
           _size = value;
-          this.reset = true;
+          this.hasBeenReset = true;
         }
       },
       "align": {
@@ -2670,7 +2686,7 @@
             throw new SyntaxError("An invalid or illegal string was specified.");
           }
           _align = setting;
-          this.reset = true;
+          this.hasBeenReset = true;
         }
       }
     });
@@ -2694,6 +2710,22 @@
 
   root.VTTCue = root.VTTCue || VTTCue;
 }(this));
+
+/**
+ * Copyright 2013 vtt.js Contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 (function(root) {
 
@@ -2824,6 +2856,25 @@
   root.VTTRegion = root.VTTRegion || VTTRegion;
 }(this));
 
+/**
+ * Copyright 2013 vtt.js Contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+
 (function(global) {
 
   function ParsingError(message) {
@@ -2895,12 +2946,6 @@
         }
       }
     },
-    // Accept a region if it doesn't have the special string '-->'
-    region: function(k, v) {
-      if (!v.match(/-->/)) {
-        this.set(k, v);
-      }
-    },
     // Accept a setting if its a valid (signed) integer.
     integer: function(k, v) {
       if (/^-?\d+$/.test(v)) { // integer
@@ -2961,7 +3006,7 @@
       parseOptions(input, function (k, v) {
         switch (k) {
         case "region":
-          settings.region(k, v);
+          settings.set(k, v);
           break;
         case "vertical":
           settings.alt(k, v, ["rl", "lr"]);
@@ -3720,7 +3765,7 @@
         continue;
       }
       // Check to see if we can just reuse the last computed styles of the cue.
-      if (cues[i].reset !== true && cues[i].displayState) {
+      if (cues[i].hasBeenReset !== true && cues[i].displayState) {
         overlay.appendChild(cues[i].displayState);
         continue;
       }
@@ -3766,7 +3811,7 @@
         parseOptions(input, function (k, v) {
           switch (k) {
           case "id":
-            settings.region(k, v);
+            settings.set(k, v);
             break;
           case "width":
             settings.percent(k, v, true);
