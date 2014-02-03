@@ -1,4 +1,4 @@
-/*! vtt.js - https://github.com/mozilla/vtt.js (built on 31-01-2014) */
+/*! vtt.js - https://github.com/mozilla/vtt.js (built on 03-02-2014) */
 (function(global) {
   'use strict';
 
@@ -2953,16 +2953,13 @@
       }
     },
     // Accept a setting if its a valid percentage.
-    percent: function(k, v, frac) {
+    percent: function(k, v) {
       var m;
       if ((m = v.match(/^([\d]{1,3})(\.[\d]*)?%$/))) {
-        v = v.replace("%", "");
-        if (!m[2] || (m[2] && frac)) {
-          v = parseFloat(v);
-          if (v >= 0 && v <= 100) {
-            this.set(k, v);
-            return true;
-          }
+        v = parseFloat(v);
+        if (v >= 0 && v <= 100) {
+          this.set(k, v);
+          return true;
         }
       }
       return false;
@@ -3739,7 +3736,7 @@
             settings.set(k, v);
             break;
           case "width":
-            settings.percent(k, v, true);
+            settings.percent(k, v);
             break;
           case "lines":
             settings.integer(k, v);
@@ -3753,8 +3750,8 @@
             // We have to make sure both x and y parse, so use a temporary
             // settings object here.
             var anchor = new Settings();
-            anchor.percent("x", xy[0], true);
-            anchor.percent("y", xy[1], true);
+            anchor.percent("x", xy[0]);
+            anchor.percent("y", xy[1]);
             if (!anchor.has("x") || !anchor.has("y")) {
               break;
             }
