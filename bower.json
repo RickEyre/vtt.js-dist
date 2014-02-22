@@ -21,7 +21,7 @@
     "Cyril Concolato <cyril.concolato@telecom-paristech.fr>"
   ],
   "description": "WebVTT parser in JavaScript.",
-  "main": "vtt.js",
+  "main": [ "vtt.js", "vtt.min.js" ],
   "keywords": [
     "WebVTT",
     "vtt",
