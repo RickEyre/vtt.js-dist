@@ -1,4 +1,4 @@
-/*! vtt.js - https://github.com/mozilla/vtt.js (built on 21-02-2014) */
+/*! vtt.js - https://github.com/mozilla/vtt.js (built on 11-03-2014) */
 (function(global) {
   'use strict';
 
@@ -2508,7 +2508,7 @@
     var _startTime = startTime;
     var _endTime = endTime;
     var _text = text;
-    var _regionId = "";
+    var _region = null;
     var _vertical = "";
     var _snapToLines = true;
     var _line = "auto";
@@ -2573,13 +2573,13 @@
           this.hasBeenReset = true;
         }
       },
-      "regionId": {
+      "region": {
         enumerable: true,
         get: function() {
-          return _regionId;
+          return _region;
         },
         set: function(value) {
-          _regionId = "" + value;
+          _region = value;
           this.hasBeenReset = true;
         },
       },
@@ -2745,7 +2745,6 @@
 
   // VTTRegion shim http://dev.w3.org/html5/webvtt/#vttregion-interface
   function VTTRegion() {
-    var _id = "";
     var _width = 100;
     var _lines = 3;
     var _regionAnchorX = 0;
@@ -2755,15 +2754,6 @@
     var _scroll = "";
 
     Object.defineProperties(this, {
-      "id": {
-        enumerable: true,
-        get: function() {
-          return _id;
-        },
-        set: function(value) {
-          _id = "" + value;
-        }
-      },
       "width": {
         enumerable: true,
         get: function() {
@@ -2985,7 +2975,7 @@
     }
   }
 
-  function parseCue(input, cue) {
+  function parseCue(input, cue, regionList) {
     // 4.1 WebVTT timestamp
     function consumeTimeStamp() {
       var ts = parseTimeStamp(input);
@@ -3004,7 +2994,13 @@
       parseOptions(input, function (k, v) {
         switch (k) {
         case "region":
-          settings.set(k, v);
+          // Find the last region we parsed with the same region id.
+          for (var i = regionList.length - 1; i >= 0; i--) {
+            if (regionList[i].id === v) {
+              settings.set(k, regionList[i].region);
+              break;
+            }
+          }
           break;
         case "vertical":
           settings.alt(k, v, ["rl", "lr"]);
@@ -3036,7 +3032,7 @@
       }, /:/, /\s/);
 
       // Apply default values for any missing fields.
-      cue.regionId = settings.get("region", "");
+      cue.region = settings.get("region", null);
       cue.vertical = settings.get("vertical", "");
       cue.line = settings.get("line", "auto");
       cue.lineAlign = settings.get("lineAlign", "start");
@@ -3875,6 +3871,7 @@
     this.state = "INITIAL";
     this.buffer = "";
     this.decoder = decoder || new TextDecoder("utf8");
+    this.regionList = [];
   }
 
   // Helper to allow strings to be decoded instead of the default binary utf8 data.
@@ -4036,11 +4033,10 @@
           }
         }, /=/, /\s/);
 
-        // Register the region, using default values for any values that were not
+        // Create the region, using default values for any values that were not
         // specified.
-        if (self.onregion && settings.has("id")) {
+        if (settings.has("id")) {
           var region = new self.window.VTTRegion();
-          region.id = settings.get("id");
           region.width = settings.get("width", 100);
           region.lines = settings.get("lines", 3);
           region.regionAnchorX = settings.get("regionanchorX", 0);
@@ -4048,7 +4044,14 @@
           region.viewportAnchorX = settings.get("viewportanchorX", 0);
           region.viewportAnchorY = settings.get("viewportanchorY", 100);
           region.scroll = settings.get("scroll", "");
-          self.onregion(region);
+          // Register the region.
+          self.onregion && self.onregion(region);
+          // Remember the VTTRegion for later in case we parse any VTTCues that
+          // reference it.
+          self.regionList.push({
+            id: settings.get("id"),
+            region: region
+          });
         }
       }
 
@@ -4129,7 +4132,7 @@
           case "CUE":
             // 40 - Collect cue timings and settings.
             try {
-              parseCue(line, self.cue);
+              parseCue(line, self.cue, self.regionList);
             } catch (e) {
               // If it's not a parsing error then throw it to the consumer.
               if (!(e instanceof ParsingError)) {
