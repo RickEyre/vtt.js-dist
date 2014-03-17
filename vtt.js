@@ -1,4 +1,4 @@
-/*! vtt.js - https://github.com/mozilla/vtt.js (built on 12-03-2014) */
+/*! vtt.js - https://github.com/mozilla/vtt.js (built on 17-03-2014) */
 (function(global) {
   'use strict';
 
@@ -2879,12 +2879,29 @@
     };
   })();
 
-  function ParsingError(message) {
+  // Creates a new ParserError object from an errorData object. The errorData
+  // object should have default code and message properties. The default message
+  // property can be overriden by passing in a message parameter.
+  // See ParsingError.Errors below for acceptable errors.
+  function ParsingError(errorData, message) {
     this.name = "ParsingError";
-    this.message = message || "";
+    this.code = errorData.code;
+    this.message = message || errorData.message;
   }
   ParsingError.prototype = _objCreate(Error.prototype);
   ParsingError.prototype.constructor = ParsingError;
+
+  // ParsingError metadata for acceptable ParsingErrors.
+  ParsingError.Errors = {
+    BadSignature: {
+      code: 0,
+      message: "Malformed WebVTT signature."
+    },
+    BadTimeStamp: {
+      code: 1,
+      message: "Malformed time stamp."
+    }
+  };
 
   // Try to parse input as a time stamp.
   function parseTimeStamp(input) {
@@ -2992,7 +3009,7 @@
     function consumeTimeStamp() {
       var ts = parseTimeStamp(input);
       if (ts === null) {
-        throw new ParsingError("Malformed time stamp.");
+        throw new ParsingError(ParsingError.Errors.BadTimeStamp);
       }
       // Remove time stamp from input.
       input = input.replace(/^[^\sa-zA-Z-]+/, "");
@@ -3076,7 +3093,8 @@
     cue.startTime = consumeTimeStamp();   // (1) collect cue start time
     skipWhitespace();
     if (input.substr(0, 3) !== "-->") {     // (3) next characters must match "-->"
-      throw new ParsingError("Malformed time stamp (time stamps must be separated by '-->').");
+      throw new ParsingError(ParsingError.Errors.BadTimeStamp,
+                             "Malformed time stamp (time stamps must be separated by '-->').");
     }
     input = input.substr(3);
     skipWhitespace();
@@ -3985,6 +4003,15 @@
   };
 
   WebVTTParser.prototype = {
+    // If the error is a ParsingError then catch it and report it to the
+    // consumer if possible, otherwise, throw it.
+    reportOrThrowError: function(e) {
+      if (e instanceof ParsingError) {
+        this.onparsingerror && this.onparsingerror(e);
+      } else {
+        throw e;
+      }
+    },
     parse: function (data) {
       var self = this;
 
@@ -4099,7 +4126,7 @@
 
           var m = line.match(/^WEBVTT([ \t].*)?$/);
           if (!m || !m[0]) {
-            throw new ParsingError("Malformed WebVTT signature.");
+            throw new ParsingError(ParsingError.Errors.BadSignature);
           }
 
           self.state = "HEADER";
@@ -4153,10 +4180,7 @@
             try {
               parseCue(line, self.cue, self.regionList);
             } catch (e) {
-              // If it's not a parsing error then throw it to the consumer.
-              if (!(e instanceof ParsingError)) {
-                throw e;
-              }
+              self.reportOrThrowError(e);
               // In case of an error ignore rest of the cue.
               self.cue = null;
               self.state = "BADCUE";
@@ -4187,11 +4211,9 @@
           }
         }
       } catch (e) {
-        // If it's not a parsing error then throw it to the consumer.
-        if (!(e instanceof ParsingError)) {
-          throw e;
-        }
-        // If we are currently parsing a cue, report what we have, and then the error.
+        self.reportOrThrowError(e);
+
+        // If we are currently parsing a cue, report what we have.
         if (self.state === "CUETEXT" && self.cue && self.oncue) {
           self.oncue(self.cue);
         }
@@ -4206,12 +4228,22 @@
     },
     flush: function () {
       var self = this;
-      // Finish decoding the stream.
-      self.buffer += self.decoder.decode();
-      // Synthesize the end of the current cue or region.
-      if (self.cue || self.state === "HEADER") {
-        self.buffer += "\n\n";
-        self.parse();
+      try {
+        // Finish decoding the stream.
+        self.buffer += self.decoder.decode();
+        // Synthesize the end of the current cue or region.
+        if (self.cue || self.state === "HEADER") {
+          self.buffer += "\n\n";
+          self.parse();
+        }
+        // If we've flushed, parsed, and we're still on the INITIAL state then
+        // that means we don't have enough of the stream to parse the first
+        // line.
+        if (self.state === "INITIAL") {
+          throw new ParsingError(ParsingError.Errors.BadSignature);
+        }
+      } catch(e) {
+        self.reportOrThrowError(e);
       }
       self.onflush && self.onflush();
       return this;
