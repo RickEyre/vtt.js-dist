@@ -1,4 +1,4 @@
-/*! vtt.js - https://github.com/mozilla/vtt.js (built on 17-03-2014) */
+/*! vtt.js - https://github.com/mozilla/vtt.js (built on 19-03-2014) */
 (function(global) {
   'use strict';
 
@@ -2704,8 +2704,8 @@
    */
 
   VTTCue.prototype.getCueAsHTML = function() {
-    // Assume WebVTTParser is on the global.
-    return WebVTTParser.parseContent(window, this.text);
+    // Assume WebVTT.convertCueToDOMTree is on the global.
+    return WebVTT.convertCueToDOMTree(window, this.text);
   };
 
   root.VTTCue = root.VTTCue || VTTCue;
@@ -2867,12 +2867,11 @@
 
 (function(global) {
 
-  _objCreate = (function(){
-    function F(){}
-
-    return function(o){
+  _objCreate = Object.create || (function() {
+    function F() {}
+    return function(o) {
       if (arguments.length !== 1) {
-        throw new Error('Object.create implementation only accepts one parameter.');
+        throw new Error('Object.create shim only accepts one parameter.');
       }
       F.prototype = o;
       return new F();
@@ -3903,16 +3902,12 @@
     styleBox.move(bestPosition.toCSSCompatValues(containerBox));
   }
 
-  function WebVTTParser(window, decoder) {
-    this.window = window;
-    this.state = "INITIAL";
-    this.buffer = "";
-    this.decoder = decoder || new TextDecoder("utf8");
-    this.regionList = [];
+  function WebVTT() {
+    // Nothing
   }
 
   // Helper to allow strings to be decoded instead of the default binary utf8 data.
-  WebVTTParser.StringDecoder = function() {
+  WebVTT.StringDecoder = function() {
     return {
       decode: function(data) {
         if (!data) {
@@ -3926,7 +3921,7 @@
     };
   };
 
-  WebVTTParser.convertCueToDOMTree = function(window, cuetext) {
+  WebVTT.convertCueToDOMTree = function(window, cuetext) {
     if (!window || !cuetext) {
       return null;
     }
@@ -3940,7 +3935,7 @@
   // Runs the processing model over the cues and regions passed to it.
   // @param overlay A block level element (usually a div) that the computed cues
   //                and regions will be placed into.
-  WebVTTParser.processCues = function(window, cues, overlay) {
+  WebVTT.processCues = function(window, cues, overlay) {
     if (!window || !cues || !overlay) {
       return null;
     }
@@ -4002,7 +3997,15 @@
     });
   };
 
-  WebVTTParser.prototype = {
+  WebVTT.Parser = function(window, decoder) {
+    this.window = window;
+    this.state = "INITIAL";
+    this.buffer = "";
+    this.decoder = decoder || new TextDecoder("utf8");
+    this.regionList = [];
+  };
+
+  WebVTT.Parser.prototype = {
     // If the error is a ParsingError then catch it and report it to the
     // consumer if possible, otherwise, throw it.
     reportOrThrowError: function(e) {
@@ -4248,6 +4251,6 @@
     }
   };
 
-  global.WebVTTParser = WebVTTParser;
+  global.WebVTT = WebVTT;
 
 }(this));
