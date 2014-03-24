@@ -1,4 +1,4 @@
-/*! vtt.js - https://github.com/mozilla/vtt.js (built on 19-03-2014) */
+/*! vtt.js - https://github.com/mozilla/vtt.js (built on 24-03-2014) */
 (function(global) {
   'use strict';
 
@@ -3916,7 +3916,7 @@
         if (typeof data !== "string") {
           throw new Error("Error - expected string data.");
         }
-        return decodeURIComponent(escape(data));
+        return decodeURIComponent(encodeURIComponent(data));
       }
     };
   };
